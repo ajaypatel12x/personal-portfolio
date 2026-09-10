@@ -2,8 +2,10 @@ import { useState } from "react";
 
 import "./Login.css";
 
+// Uses the Vercel environment variable in production.
+// Falls back to localhost for local development.
 const API_URL =
-  "http://localhost:5000/api/admin";
+  `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/admin`;
 
 function Login({ onLogin }) {
   const [username, setUsername] =
@@ -25,6 +27,10 @@ function Login({ onLogin }) {
     setLoading(true);
 
     try {
+      // ==================================================
+      // LOGIN
+      // ==================================================
+
       const response =
         await fetch(
           `${API_URL}/login`,
@@ -51,7 +57,7 @@ function Login({ onLogin }) {
       if (!response.ok) {
         throw new Error(
           data.message ||
-            "Login failed."
+            "Invalid username or password."
         );
       }
 
@@ -63,18 +69,28 @@ function Login({ onLogin }) {
         );
       }
 
-      // Verify that the session
-      // actually exists.
+      // ==================================================
+      // VERIFY ADMIN SESSION
+      // ==================================================
 
       const statusResponse =
         await fetch(
           `${API_URL}/status`,
           {
             method: "GET",
-            credentials: "include",
+
+            credentials:
+              "include",
+
             cache: "no-store",
           }
         );
+
+      if (!statusResponse.ok) {
+        throw new Error(
+          "Unable to verify admin session."
+        );
+      }
 
       const statusData =
         await statusResponse.json();
@@ -88,9 +104,14 @@ function Login({ onLogin }) {
         );
       }
 
+      // ==================================================
+      // LOGIN SUCCESS
+      // ==================================================
+
       if (onLogin) {
         onLogin();
       }
+
     } catch (loginError) {
       console.error(
         "Login error:",
@@ -101,6 +122,7 @@ function Login({ onLogin }) {
         loginError.message ||
           "Unable to login."
       );
+
     } finally {
       setLoading(false);
     }
@@ -108,8 +130,15 @@ function Login({ onLogin }) {
 
   return (
     <div className="login-page">
+
       <div className="login-card">
+
+        {/* ================================================
+            LOGIN HEADING
+        ================================================= */}
+
         <div className="login-heading">
+
           <p className="login-label">
             ADMIN ACCESS
           </p>
@@ -122,13 +151,22 @@ function Login({ onLogin }) {
             Sign in to manage your
             portfolio.
           </p>
+
         </div>
+
+        {/* ================================================
+            LOGIN FORM
+        ================================================= */}
 
         <form
           className="login-form"
           onSubmit={handleLogin}
         >
+
+          {/* USERNAME */}
+
           <div className="login-field">
+
             <label>
               Username
             </label>
@@ -146,9 +184,13 @@ function Login({ onLogin }) {
               required
               disabled={loading}
             />
+
           </div>
 
+          {/* PASSWORD */}
+
           <div className="login-field">
+
             <label>
               Password
             </label>
@@ -166,13 +208,18 @@ function Login({ onLogin }) {
               required
               disabled={loading}
             />
+
           </div>
+
+          {/* ERROR */}
 
           {error && (
             <p className="login-error">
               {error}
             </p>
           )}
+
+          {/* LOGIN BUTTON */}
 
           <button
             type="submit"
@@ -183,9 +230,15 @@ function Login({ onLogin }) {
               ? "AUTHENTICATING..."
               : "SIGN IN"}
           </button>
+
         </form>
 
+        {/* ================================================
+            BACK TO PORTFOLIO
+        ================================================= */}
+
         <div className="login-footer">
+
           <button
             type="button"
             onClick={() => {
@@ -195,8 +248,11 @@ function Login({ onLogin }) {
           >
             ← Back to Portfolio
           </button>
+
         </div>
+
       </div>
+
     </div>
   );
 }
