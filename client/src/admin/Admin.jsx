@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import "./Admin.css";
 import ProjectManager from "./ProjectManager";
 
-const API_URL =
-    `${import.meta.env.VITE_API_URL}/admin`;
+const API_URL = "/api/admin";
 
 const DEFAULT_APPEARANCE = {
     activeFrame: "frame01",

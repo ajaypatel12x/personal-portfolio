@@ -1,128 +1,87 @@
 import { useState } from "react";
-
 import "./Login.css";
 
-// Uses the Vercel environment variable in production.
-// Falls back to localhost for local development.
-const API_URL =
-  `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/admin`;
+const API_URL = "/api/admin";
 
 function Login({ onLogin }) {
-  const [username, setUsername] =
-    useState("");
-
-  const [password, setPassword] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogin = async (event) => {
     event.preventDefault();
 
-    setError("");
     setLoading(true);
+    setError("");
 
     try {
-      // ==================================================
+      // ==========================================
       // LOGIN
-      // ==================================================
+      // ==========================================
 
-      const response =
-        await fetch(
-          `${API_URL}/login`,
-          {
-            method: "POST",
+      const loginResponse = await fetch(
+        `${API_URL}/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            username,
+            password,
+          }),
+        }
+      );
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+      const loginData = await loginResponse.json();
 
-            credentials: "include",
-
-            body: JSON.stringify({
-              username,
-              password,
-            }),
-          }
-        );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
+      if (!loginResponse.ok) {
         throw new Error(
-          data.message ||
+          loginData.message ||
             "Invalid username or password."
         );
       }
 
-      if (
-        data.success !== true
-      ) {
-        throw new Error(
-          "Login failed."
-        );
-      }
+      // ==========================================
+      // VERIFY SESSION
+      // ==========================================
 
-      // ==================================================
-      // VERIFY ADMIN SESSION
-      // ==================================================
+      const statusResponse = await fetch(
+        `${API_URL}/status`,
+        {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        }
+      );
 
-      const statusResponse =
-        await fetch(
-          `${API_URL}/status`,
-          {
-            method: "GET",
-
-            credentials:
-              "include",
-
-            cache: "no-store",
-          }
-        );
-
-      if (!statusResponse.ok) {
-        throw new Error(
-          "Unable to verify admin session."
-        );
-      }
-
-      const statusData =
-        await statusResponse.json();
+      const statusData = await statusResponse.json();
 
       if (
-        statusData.authenticated !==
-        true
+        !statusResponse.ok ||
+        statusData.authenticated !== true
       ) {
         throw new Error(
           "Login succeeded but the admin session was not created."
         );
       }
 
-      // ==================================================
+      // ==========================================
       // LOGIN SUCCESS
-      // ==================================================
+      // ==========================================
 
       if (onLogin) {
         onLogin();
       }
-
-    } catch (loginError) {
-      console.error(
-        "Login error:",
-        loginError
-      );
+    } catch (error) {
+      console.error("Login failed:", error);
 
       setError(
-        loginError.message ||
-          "Unable to login."
+        error.message ||
+          "Login failed. Please try again."
       );
-
     } finally {
       setLoading(false);
     }
@@ -130,33 +89,31 @@ function Login({ onLogin }) {
 
   return (
     <div className="login-page">
-
       <div className="login-card">
 
-        {/* ================================================
-            LOGIN HEADING
-        ================================================= */}
+        {/* ==========================================
+            HEADING
+            ========================================== */}
 
         <div className="login-heading">
-
           <p className="login-label">
             ADMIN ACCESS
           </p>
 
           <h1>
-            Welcome back.
+            Welcome
+            <br />
+            back.
           </h1>
 
           <p>
-            Sign in to manage your
-            portfolio.
+            Sign in to manage your portfolio.
           </p>
-
         </div>
 
-        {/* ================================================
+        {/* ==========================================
             LOGIN FORM
-        ================================================= */}
+            ========================================== */}
 
         <form
           className="login-form"
@@ -166,49 +123,41 @@ function Login({ onLogin }) {
           {/* USERNAME */}
 
           <div className="login-field">
-
-            <label>
+            <label htmlFor="username">
               Username
             </label>
 
             <input
+              id="username"
               type="text"
               value={username}
               onChange={(event) =>
-                setUsername(
-                  event.target.value
-                )
+                setUsername(event.target.value)
               }
               placeholder="Enter username"
               autoComplete="username"
               required
-              disabled={loading}
             />
-
           </div>
 
           {/* PASSWORD */}
 
           <div className="login-field">
-
-            <label>
+            <label htmlFor="password">
               Password
             </label>
 
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(event) =>
-                setPassword(
-                  event.target.value
-                )
+                setPassword(event.target.value)
               }
               placeholder="Enter password"
               autoComplete="current-password"
               required
-              disabled={loading}
             />
-
           </div>
 
           {/* ERROR */}
@@ -219,7 +168,7 @@ function Login({ onLogin }) {
             </p>
           )}
 
-          {/* LOGIN BUTTON */}
+          {/* SIGN IN */}
 
           <button
             type="submit"
@@ -227,32 +176,28 @@ function Login({ onLogin }) {
             disabled={loading}
           >
             {loading
-              ? "AUTHENTICATING..."
-              : "SIGN IN"}
+              ? "Signing in..."
+              : "Sign In"}
           </button>
 
         </form>
 
-        {/* ================================================
-            BACK TO PORTFOLIO
-        ================================================= */}
+        {/* ==========================================
+            FOOTER
+            ========================================== */}
 
         <div className="login-footer">
-
           <button
             type="button"
             onClick={() => {
-              window.location.href =
-                "/";
+              window.location.href = "/";
             }}
           >
             ← Back to Portfolio
           </button>
-
         </div>
 
       </div>
-
     </div>
   );
 }
